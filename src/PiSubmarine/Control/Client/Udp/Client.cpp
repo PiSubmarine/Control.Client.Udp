@@ -32,20 +32,20 @@ namespace PiSubmarine::Control::Client::Udp
             return bytes;
         }
 
-        [[nodiscard]] Security::Aead::Api::Key MakeKey(const Lease::Api::LeaseSecret& leaseSecret)
+        [[nodiscard]] ::PiSubmarine::Security::Aead::Api::Key MakeKey(const Lease::Api::LeaseSecret& leaseSecret)
         {
-            return Security::Aead::Api::Key{.Value = leaseSecret.Value};
+            return ::PiSubmarine::Security::Aead::Api::Key{.Value = leaseSecret.Value};
         }
 
-        [[nodiscard]] Security::Aead::Api::AssociatedData MakeAssociatedData(const Lease::Api::LeaseId& leaseId)
+        [[nodiscard]] ::PiSubmarine::Security::Aead::Api::AssociatedData MakeAssociatedData(const Lease::Api::LeaseId& leaseId)
         {
-            return Security::Aead::Api::AssociatedData{.Value = EncodeString(leaseId.Value)};
+            return ::PiSubmarine::Security::Aead::Api::AssociatedData{.Value = EncodeString(leaseId.Value)};
         }
 
         [[nodiscard]] std::vector<std::byte> BuildPacket(
             const Lease::Api::LeaseId& leaseId,
-            const Security::Nonce::Api::Nonce& nonce,
-            const Security::Aead::Api::Ciphertext& ciphertext)
+            const ::PiSubmarine::Security::Api::Nonce& nonce,
+            const ::PiSubmarine::Security::Aead::Api::Ciphertext& ciphertext)
         {
             std::vector<std::byte> bytes;
             bytes.reserve(EncodedFieldSize * 2 + leaseId.Value.size() + nonce.Value.size() + ciphertext.Value.size());
@@ -66,7 +66,7 @@ namespace PiSubmarine::Control::Client::Udp
         Lease::Api::ILeaseIssuer& leaseIssuer,
         const ::PiSubmarine::Control::ISerializer& serializer,
         const ::PiSubmarine::Security::Aead::Api::IProvider& aeadProvider,
-        ::PiSubmarine::Security::Nonce::Api::IProvider& nonceProvider,
+        ::PiSubmarine::Security::Api::INonceProvider& nonceProvider,
         ::PiSubmarine::Udp::Api::ISender& sender,
         ::PiSubmarine::Udp::Api::Endpoint serverEndpoint,
         Clock clock)
@@ -114,7 +114,7 @@ namespace PiSubmarine::Control::Client::Udp
         const auto ciphertextResult = m_AeadProvider.Seal(
             MakeKey(*m_LeaseSecret),
             *nonceResult,
-            Security::Aead::Api::Plaintext{.Value = *serializedResult},
+            ::PiSubmarine::Security::Aead::Api::Plaintext{.Value = *serializedResult},
             MakeAssociatedData(m_Lease->Id));
         if (!ciphertextResult.has_value())
         {

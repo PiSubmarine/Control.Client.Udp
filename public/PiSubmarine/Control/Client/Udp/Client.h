@@ -8,8 +8,8 @@
 #include "PiSubmarine/Control/Api/Input/ISink.h"
 #include "PiSubmarine/Control/ISerializer.h"
 #include "PiSubmarine/Lease/Api/ILeaseIssuer.h"
+#include "PiSubmarine/Security/Api/INonceProvider.h"
 #include "PiSubmarine/Security/Aead/Api/IProvider.h"
-#include "PiSubmarine/Security/Nonce/Api/IProvider.h"
 #include "PiSubmarine/Udp/Api/ISender.h"
 
 namespace PiSubmarine::Control::Client::Udp
@@ -24,7 +24,7 @@ namespace PiSubmarine::Control::Client::Udp
             Lease::Api::ILeaseIssuer& leaseIssuer,
             const ::PiSubmarine::Control::ISerializer& serializer,
             const ::PiSubmarine::Security::Aead::Api::IProvider& aeadProvider,
-            ::PiSubmarine::Security::Nonce::Api::IProvider& nonceProvider,
+            ::PiSubmarine::Security::Api::INonceProvider& nonceProvider,
             ::PiSubmarine::Udp::Api::ISender& sender,
             ::PiSubmarine::Udp::Api::Endpoint serverEndpoint,
             Clock clock = [] { return std::chrono::steady_clock::now(); });
@@ -42,7 +42,7 @@ namespace PiSubmarine::Control::Client::Udp
         Lease::Api::ILeaseIssuer& m_LeaseIssuer;
         const ::PiSubmarine::Control::ISerializer& m_Serializer;
         const ::PiSubmarine::Security::Aead::Api::IProvider& m_AeadProvider;
-        ::PiSubmarine::Security::Nonce::Api::IProvider& m_NonceProvider;
+        ::PiSubmarine::Security::Api::INonceProvider& m_NonceProvider;
         ::PiSubmarine::Udp::Api::ISender& m_Sender;
         ::PiSubmarine::Udp::Api::Endpoint m_ServerEndpoint;
         Clock m_Clock;

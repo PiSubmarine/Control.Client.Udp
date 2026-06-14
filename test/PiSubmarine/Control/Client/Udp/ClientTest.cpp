@@ -11,8 +11,8 @@
 #include "PiSubmarine/Control/Client/Udp/Client.h"
 #include "PiSubmarine/Control/ISerializerMock.h"
 #include "PiSubmarine/Lease/Api/ILeaseIssuerMock.h"
+#include "PiSubmarine/Security/Api/INonceProviderMock.h"
 #include "PiSubmarine/Security/Aead/Api/IProviderMock.h"
-#include "PiSubmarine/Security/Nonce/Api/IProviderMock.h"
 #include "PiSubmarine/Udp/Api/ISenderMock.h"
 
 namespace PiSubmarine::Control::Client::Udp
@@ -90,7 +90,7 @@ namespace PiSubmarine::Control::Client::Udp
         StrictMock<Lease::Api::ILeaseIssuerMock> leaseIssuer;
         StrictMock<::PiSubmarine::Control::ISerializerMock> serializer;
         StrictMock<Security::Aead::Api::IProviderMock> aeadProvider;
-        StrictMock<Security::Nonce::Api::IProviderMock> nonceProvider;
+        StrictMock<Security::Api::INonceProviderMock> nonceProvider;
         StrictMock<::PiSubmarine::Udp::Api::ISenderMock> sender;
 
         auto now = std::chrono::steady_clock::time_point{};
@@ -114,11 +114,11 @@ namespace PiSubmarine::Control::Client::Udp
             .WillOnce(Return(Error::Api::Result<std::vector<std::byte>>(
                 std::vector<std::byte>{std::byte{0x01}, std::byte{0x02}})));
         EXPECT_CALL(nonceProvider, Next())
-            .WillOnce(Return(Error::Api::Result<Security::Nonce::Api::Nonce>(
-                Security::Nonce::Api::Nonce{.Value = {std::byte{0x10}}})));
+            .WillOnce(Return(Error::Api::Result<Security::Api::Nonce>(
+                Security::Api::Nonce{.Value = {std::byte{0x10}}})));
         EXPECT_CALL(aeadProvider, Seal(
                         MakeKey(),
-                        Security::Nonce::Api::Nonce{.Value = {std::byte{0x10}}},
+                        Security::Api::Nonce{.Value = {std::byte{0x10}}},
                         Security::Aead::Api::Plaintext{.Value = {std::byte{0x01}, std::byte{0x02}}},
                         MakeAssociatedData()))
             .WillOnce(Return(Error::Api::Result<Security::Aead::Api::Ciphertext>(
@@ -140,7 +140,7 @@ namespace PiSubmarine::Control::Client::Udp
         StrictMock<Lease::Api::ILeaseIssuerMock> leaseIssuer;
         StrictMock<::PiSubmarine::Control::ISerializerMock> serializer;
         StrictMock<Security::Aead::Api::IProviderMock> aeadProvider;
-        StrictMock<Security::Nonce::Api::IProviderMock> nonceProvider;
+        StrictMock<Security::Api::INonceProviderMock> nonceProvider;
         StrictMock<::PiSubmarine::Udp::Api::ISenderMock> sender;
 
         auto now = std::chrono::steady_clock::time_point{};
@@ -165,8 +165,8 @@ namespace PiSubmarine::Control::Client::Udp
                 std::vector<std::byte>{std::byte{0x01}})));
         EXPECT_CALL(nonceProvider, Next())
             .Times(2)
-            .WillRepeatedly(Return(Error::Api::Result<Security::Nonce::Api::Nonce>(
-                Security::Nonce::Api::Nonce{.Value = {std::byte{0x10}}})));
+            .WillRepeatedly(Return(Error::Api::Result<Security::Api::Nonce>(
+                Security::Api::Nonce{.Value = {std::byte{0x10}}})));
         EXPECT_CALL(aeadProvider, Seal(_, _, _, _))
             .Times(2)
             .WillRepeatedly(Return(Error::Api::Result<Security::Aead::Api::Ciphertext>(
