@@ -155,6 +155,11 @@ namespace PiSubmarine::Control::Client::Udp
                 return {};
             }
 
+            if (renewResult.error().Condition == Error::Api::ErrorCondition::NotReady)
+            {
+                return {};
+            }
+
             ReleaseLeaseLocked();
         }
 

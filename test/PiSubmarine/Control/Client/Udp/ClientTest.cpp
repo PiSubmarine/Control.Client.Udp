@@ -183,4 +183,81 @@ namespace PiSubmarine::Control::Client::Udp
         now += std::chrono::milliseconds(2000);
         ASSERT_TRUE(client.Submit(inputCommand).has_value());
     }
+
+    TEST(ClientTest, SubmitReturnsNotReadyWhenAcquireIsStillInProgress)
+    {
+        StrictMock<Lease::Api::ILeaseIssuerMock> leaseIssuer;
+        StrictMock<::PiSubmarine::Control::ISerializerMock> serializer;
+        StrictMock<Security::Aead::Api::IProviderMock> aeadProvider;
+        StrictMock<Security::Api::INonceProviderMock> nonceProvider;
+        StrictMock<::PiSubmarine::Udp::Api::ISenderMock> sender;
+
+        auto now = std::chrono::steady_clock::time_point{};
+        Client client(
+            leaseIssuer,
+            serializer,
+            aeadProvider,
+            nonceProvider,
+            sender,
+            ::PiSubmarine::Udp::Api::Endpoint{"127.0.0.1", 9000},
+            [&now] { return now; });
+
+        EXPECT_CALL(leaseIssuer, AcquireLease(Lease::Api::LeaseRequest{
+                        .Resource = Lease::Api::ResourceId{.Value = "control-main"}}))
+            .WillOnce(Return(std::unexpected(Error::Api::MakeError(Error::Api::ErrorCondition::NotReady))));
+
+        const auto result = client.Submit(Api::Input::OperatorCommand{});
+
+        ASSERT_FALSE(result.has_value());
+        EXPECT_EQ(result.error().Condition, Error::Api::ErrorCondition::NotReady);
+    }
+
+    TEST(ClientTest, SubmitKeepsCurrentLeaseWhenRenewIsStillInProgress)
+    {
+        StrictMock<Lease::Api::ILeaseIssuerMock> leaseIssuer;
+        StrictMock<::PiSubmarine::Control::ISerializerMock> serializer;
+        StrictMock<Security::Aead::Api::IProviderMock> aeadProvider;
+        StrictMock<Security::Api::INonceProviderMock> nonceProvider;
+        StrictMock<::PiSubmarine::Udp::Api::ISenderMock> sender;
+
+        auto now = std::chrono::steady_clock::time_point{};
+        Client client(
+            leaseIssuer,
+            serializer,
+            aeadProvider,
+            nonceProvider,
+            sender,
+            ::PiSubmarine::Udp::Api::Endpoint{"127.0.0.1", 9000},
+            [&now] { return now; });
+
+        Api::Input::OperatorCommand inputCommand{};
+        Api::Input::OperatorCommand serializedCommand{};
+        serializedCommand.LeaseId = Lease::Api::LeaseId{.Value = "lease-1"};
+
+        EXPECT_CALL(leaseIssuer, AcquireLease(_))
+            .WillOnce(Return(Error::Api::Result<Lease::Api::LeaseGrant>(MakeLeaseGrant())));
+        EXPECT_CALL(serializer, Serialize(serializedCommand))
+            .Times(2)
+            .WillRepeatedly(Return(Error::Api::Result<std::vector<std::byte>>(
+                std::vector<std::byte>{std::byte{0x01}})));
+        EXPECT_CALL(nonceProvider, Next())
+            .Times(2)
+            .WillRepeatedly(Return(Error::Api::Result<Security::Api::Nonce>(
+                Security::Api::Nonce{.Value = {std::byte{0x10}}})));
+        EXPECT_CALL(aeadProvider, Seal(_, _, _, _))
+            .Times(2)
+            .WillRepeatedly(Return(Error::Api::Result<Security::Aead::Api::Ciphertext>(
+                Security::Aead::Api::Ciphertext{.Value = {std::byte{0x20}}})));
+        EXPECT_CALL(sender, Send(_))
+            .Times(2)
+            .WillRepeatedly(Return(Error::Api::Result<void>{}));
+        EXPECT_CALL(leaseIssuer, RenewLease(Lease::Api::LeaseId{.Value = "lease-1"}))
+            .WillOnce(Return(std::unexpected(Error::Api::MakeError(Error::Api::ErrorCondition::NotReady))));
+        EXPECT_CALL(leaseIssuer, ReleaseLease(Lease::Api::LeaseId{.Value = "lease-1"}))
+            .WillOnce(Return(Error::Api::Result<void>{}));
+
+        ASSERT_TRUE(client.Submit(inputCommand).has_value());
+        now += std::chrono::milliseconds(2000);
+        ASSERT_TRUE(client.Submit(inputCommand).has_value());
+    }
 }
