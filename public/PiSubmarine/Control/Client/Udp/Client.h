@@ -31,6 +31,7 @@ namespace PiSubmarine::Control::Client::Udp
 
         ~Client() override;
 
+        [[nodiscard]] bool HasLease() const noexcept;
         [[nodiscard]] Error::Api::Result<void> Submit(const Api::Input::OperatorCommand& command) override;
 
     private:

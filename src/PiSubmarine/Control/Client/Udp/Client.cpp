@@ -86,6 +86,12 @@ namespace PiSubmarine::Control::Client::Udp
         ReleaseLeaseLocked();
     }
 
+    bool Client::HasLease() const noexcept
+    {
+        std::scoped_lock lock(m_Mutex);
+        return m_Lease.has_value() && m_LeaseSecret.has_value();
+    }
+
     Error::Api::Result<void> Client::Submit(const Api::Input::OperatorCommand& command)
     {
         std::scoped_lock lock(m_Mutex);
