@@ -86,7 +86,7 @@ namespace PiSubmarine::Control::Client::Udp
         ReleaseLeaseLocked();
     }
 
-    std::optional<Lease::Api::LeaseId> Client::GetLeaseId() const noexcept
+    std::optional<Lease::Api::Lease> Client::GetLease() noexcept
     {
         std::scoped_lock lock(m_Mutex);
         if (!m_Lease.has_value() || !m_LeaseSecret.has_value())
@@ -94,13 +94,7 @@ namespace PiSubmarine::Control::Client::Udp
             return std::nullopt;
         }
 
-        return m_Lease->Id;
-    }
-
-    bool Client::HasLease() const noexcept
-    {
-        std::scoped_lock lock(m_Mutex);
-        return m_Lease.has_value() && m_LeaseSecret.has_value();
+        return m_Lease;
     }
 
     Error::Api::Result<void> Client::Submit(const Api::Input::OperatorCommand& command)
