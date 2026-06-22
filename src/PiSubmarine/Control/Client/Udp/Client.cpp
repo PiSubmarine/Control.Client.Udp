@@ -187,7 +187,7 @@ namespace PiSubmarine::Control::Client::Udp
             return std::unexpected(acquireResult.error());
         }
 
-        m_Lease = acquireResult->Lease;
+        m_Lease = acquireResult->GrantedLease;
         m_LeaseSecret = acquireResult->Secret;
         m_NextRenewAt = now + ComputeRenewInterval(*m_Lease);
         return {};

@@ -55,7 +55,7 @@ namespace PiSubmarine::Control::Client::Udp
         [[nodiscard]] Lease::Api::LeaseGrant MakeLeaseGrant()
         {
             return Lease::Api::LeaseGrant{
-                .Lease = Lease::Api::Lease{
+                .GrantedLease = Lease::Api::Lease{
                     .Id = Lease::Api::LeaseId{.Value = "lease-1"},
                     .Resource = Lease::Api::ResourceId{.Value = "control-main"},
                     .Duration = std::chrono::milliseconds(3000)},
@@ -175,7 +175,7 @@ namespace PiSubmarine::Control::Client::Udp
             .Times(2)
             .WillRepeatedly(Return(Error::Api::Result<void>{}));
         EXPECT_CALL(leaseIssuer, RenewLease(Lease::Api::LeaseId{.Value = "lease-1"}))
-            .WillOnce(Return(Error::Api::Result<Lease::Api::Lease>(MakeLeaseGrant().Lease)));
+            .WillOnce(Return(Error::Api::Result<Lease::Api::Lease>(MakeLeaseGrant().GrantedLease)));
         EXPECT_CALL(leaseIssuer, ReleaseLease(Lease::Api::LeaseId{.Value = "lease-1"}))
             .WillOnce(Return(Error::Api::Result<void>{}));
 
